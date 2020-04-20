@@ -28,6 +28,7 @@ class EndpointSchemaTranslatorService
 	{
 		$paths = $this->getSchemaPaths();
 		$responsesData = [];
+		/** @phpstan-ignore-next-line */
 		foreach ($paths as $pathName => $path) {
 			foreach ($path as $method => $params) {
 				$r = new Response(strtoupper($method), $pathName);
@@ -160,7 +161,7 @@ class EndpointSchemaTranslatorService
 		}
 	}
 
-	private function getSchemaPaths(): array
+	private function getSchemaPaths(): \stdClass
 	{
 		$response = $this->apiClientService->get($this->schemaUrl);
 		$data = $response->getBody()->getContents();
@@ -168,6 +169,6 @@ class EndpointSchemaTranslatorService
 		if (!$data) {
 			throw new \InvalidArgumentException;
 		}
-		return json_decode(json_encode($data->paths) ?: '', true);
+		return $data->paths;
 	}
 }

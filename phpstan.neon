@@ -9,4 +9,6 @@ parameters:
 	ignoreErrors:
 		- '#Parameter \#1 $argument of class ReflectionClass constructor expects class-string\<T of object\>|T of object, string given.#'
 		- '#Call to an undefined method ReflectionType::getName\(\).#'
-		- '#Cannot access property*#'
+		-
+			message: '#Cannot access property*#'
+			path: src/DI/ApiClientExtension.php

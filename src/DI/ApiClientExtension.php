@@ -51,7 +51,7 @@ class ApiClientExtension extends CompilerExtension
 
 		// client
 		$builder->addDefinition($this->prefix('clientCredentialsGrantService'))
-		->setFactory(ClientCredentialsGrantService::class, [$config->clientCredentialsTempTokenFile]);
+			->setFactory(ClientCredentialsGrantService::class, [$config->clientCredentialsTempTokenFile]);
 
 		$builder->addDefinition($this->prefix('apiClientService'))
 			->setFactory(ApiClientService::class, [$config->baseUrl]);
