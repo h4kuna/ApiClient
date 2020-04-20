@@ -1,0 +1,12 @@
+includes:
+	- vendor/phpstan/phpstan-nette/extension.neon
+	- vendor/phpstan/phpstan-nette/rules.neon
+
+parameters:
+	inferPrivatePropertyTypeFromConstructor: true
+	checkMissingIterableValueType: false
+
+	ignoreErrors:
+		- '#Parameter \#1 $argument of class ReflectionClass constructor expects class-string\<T of object\>|T of object, string given.#'
+		- '#Call to an undefined method ReflectionType::getName\(\).#'
+		- '#Cannot access property*#'
