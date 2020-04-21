@@ -43,6 +43,6 @@ final class Authenticator implements IAuthenticator
 			throw new AuthenticationException("", $code);
 		}
 
-		return new UserIdentityTemporary($user->getData()->id, $t);
+		return $user;
 	}
 }

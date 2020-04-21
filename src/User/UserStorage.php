@@ -35,7 +35,7 @@ class UserStorage extends NetteUserStorage
 	public function getIdentity(): ?IIdentity
 	{
 		$identity = parent::getIdentity();
-		if ($identity instanceof UserIdentityTemporary) {
+		if ($identity instanceof UserIdentity) {
 			$token = $this->getAuthToken();
 			if ($token) {
 				try {
@@ -54,7 +54,7 @@ class UserStorage extends NetteUserStorage
 	public function getAuthToken(): ?AccessTokenInterface
 	{
 		$identity = parent::getIdentity();
-		if ($identity instanceof UserIdentityTemporary) {
+		if ($identity instanceof UserIdentity) {
 			$token = $identity->getAuthToken();
 			if ($token->hasExpired()) {
 				$token = $this->passwordGrantService->getRefreshToken($token);
