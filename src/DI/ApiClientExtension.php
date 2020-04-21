@@ -28,6 +28,7 @@ class ApiClientExtension extends CompilerExtension
 			'schemaUrl' => Expect::string('/v1/schema'),
 			'generatedModelPath' => Expect::string(),
 			'clientCredentialsTempTokenFile' => Expect::string(),
+			'onlyPathsStartWith' => Expect::string('/v1/'),
 		]);
 	}
 
@@ -41,7 +42,7 @@ class ApiClientExtension extends CompilerExtension
 			->setFactory(GenerateSchemaClassesCommand::class);
 
 		$builder->addDefinition($this->prefix('endpointSchemaTranslatorService'))
-			->setFactory(EndpointSchemaTranslatorService::class, [$config->schemaUrl]);
+			->setFactory(EndpointSchemaTranslatorService::class, [$config->schemaUrl, $config->onlyPathsStartWith]);
 
 		$builder->addDefinition($this->prefix('phpFileFromNamespaceCreatorService'))
 			->setFactory(PhpFileFromNamespaceCreatorService::class, [$config->generatedModelPath]);

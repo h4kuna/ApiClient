@@ -6,6 +6,7 @@ use MirkoHuttner\ApiClient\ValueObject\RequestParameter;
 use MirkoHuttner\ApiClient\ValueObject\Response;
 use MirkoHuttner\ApiClient\ValueObject\ResponseProperty;
 use Nette\Http\FileUpload;
+use Nette\Utils\Strings;
 
 class EndpointSchemaTranslatorService
 {
@@ -13,11 +14,15 @@ class EndpointSchemaTranslatorService
 
 	private string $schemaUrl;
 
+	private string $onlyPathsStartWith;
+
 	public function __construct(
 		string $schemaUrl,
+		string $onlyPathsStartWith,
 		ApiClientService $apiClientService
 	) {
 		$this->schemaUrl = $schemaUrl;
+		$this->onlyPathsStartWith = $onlyPathsStartWith;
 		$this->apiClientService = $apiClientService;
 	}
 
@@ -28,7 +33,6 @@ class EndpointSchemaTranslatorService
 	{
 		$paths = $this->getSchemaPaths();
 		$responsesData = [];
-		/** @phpstan-ignore-next-line */
 		foreach ($paths as $pathName => $path) {
 			foreach ($path as $method => $params) {
 				$r = new Response(strtoupper($method), $pathName);
@@ -161,14 +165,23 @@ class EndpointSchemaTranslatorService
 		}
 	}
 
-	private function getSchemaPaths(): \stdClass
+	private function getSchemaPaths(): array
 	{
 		$response = $this->apiClientService->get($this->schemaUrl);
+
 		$data = $response->getBody()->getContents();
 		$data = json_decode($data);
 		if (!$data) {
 			throw new \InvalidArgumentException;
 		}
-		return $data->paths;
+
+		$paths = [];
+		foreach ($data->paths as $pathName => $path) {
+			if (Strings::startsWith($pathName, $this->onlyPathsStartWith)) {
+				$paths[$pathName] = $path;
+			}
+		}
+
+		return $paths;
 	}
 }
