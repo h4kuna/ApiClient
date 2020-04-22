@@ -132,6 +132,8 @@ class EndpointSchemaTranslatorService
 				$type = 'object';
 			} elseif ($property->type !== 'object') {
 				$type = $this->resolveType($property->type, isset($property->format) ? $property->format : null);
+			} else {
+				return null;
 			}
 			$nullable = isset($property->nullable) ? $property->nullable : false;
 			$description = isset($property->description) ? $property->description : null;
