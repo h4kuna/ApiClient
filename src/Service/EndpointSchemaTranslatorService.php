@@ -127,10 +127,10 @@ class EndpointSchemaTranslatorService
 		$values = null;
 		foreach ($properties as $name => $property) {
 			$children = null;
-			if ($property->type === 'object') {
+			if ($property->type === 'object' && isset($property->properties)) {
 				$children = $this->propertiesToResponse((array) $property->properties);
 				$type = 'object';
-			} else {
+			} elseif ($property->type !== 'object') {
 				$type = $this->resolveType($property->type, isset($property->format) ? $property->format : null);
 			}
 			$nullable = isset($property->nullable) ? $property->nullable : false;
