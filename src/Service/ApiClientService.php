@@ -157,7 +157,7 @@ class ApiClientService
 				foreach ($data as $key => $d) {
 					if ($d instanceof FileUpload) {
 						$sendingOnlyOneFile = $d;
-						$data[$key] = base64_encode($d->contents);
+						$data[$key] = base64_encode($d->contents ?: '');
 					}
 				}
 			}
@@ -166,8 +166,8 @@ class ApiClientService
 			if (!$sendingOnlyOneFile) {
 				$options = ['body' => json_encode($data)];
 			} else {
-				$headers = ['Content-Type' => 'image/jpeg', 'Content-Length' => $sendingOnlyOneFile->size];
-				$options = ['body' => $sendingOnlyOneFile->contents, 'headers' => $headers];
+				$headers = ['Content-Type' => 'image/jpeg', 'Content-Length' => $d->size];
+				$options = ['body' => $d->contents, 'headers' => $headers];
 			}
 		}
 
