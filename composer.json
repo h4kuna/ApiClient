@@ -10,6 +10,7 @@
 		}
 	],
 	"require": {
+		"ext-json": "*",
 		"php": ">= 7.4",
 		"nette/caching": "^3.0",
 		"nette/application": "^3.0",

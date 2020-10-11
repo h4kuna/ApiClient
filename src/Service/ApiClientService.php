@@ -151,22 +151,26 @@ class ApiClientService
 		$options = [];
 
 		if ($data) {
-			$sendingFile = null;
+			/** @var FileUpload|bool $sendingOnlyOneFile */
+			$sendingOnlyOneFile = false;
 			if (is_iterable($data)) {
-				foreach ($data as $d) {
+				foreach ($data as $key => $d) {
 					if ($d instanceof FileUpload) {
-						$sendingFile = $d;
+						$sendingOnlyOneFile = $d;
+						$data[$key] = base64_encode($d->contents);
 					}
 				}
 			}
+			$sendingOnlyOneFile = $sendingOnlyOneFile ? \count($data) === 1 : false;
 
-			if (!$sendingFile) {
+			if (!$sendingOnlyOneFile) {
 				$options = ['body' => json_encode($data)];
 			} else {
-				$headers = ['Content-Type' => 'image/jpeg', 'Content-Length' => $d->size];
-				$options = ['body' => $d->contents, 'headers' => $headers];
+				$headers = ['Content-Type' => 'image/jpeg', 'Content-Length' => $sendingOnlyOneFile->size];
+				$options = ['body' => $sendingOnlyOneFile->contents, 'headers' => $headers];
 			}
 		}
+
 		return $this->provider->getAuthenticatedRequest($method, $this->baseUrl . $url, $token, $options);
 	}
 
