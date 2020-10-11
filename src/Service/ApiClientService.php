@@ -22,7 +22,6 @@ class ApiClientService
 	public const METHOD_PUT = 'PUT';
 	public const METHOD_DELETE = 'DELETE';
 	public const METHOD_PATCH = 'PATCH';
-
 	public const AUTH_GRANT_CLIENT_CREDENTIALS = 'grant-client-credentials';
 	public const AUTH_GRANT_PASSWORD = 'grant-password';
 
