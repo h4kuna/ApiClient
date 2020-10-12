@@ -160,6 +160,8 @@ class EndpointSchemaTranslatorService
 			return 'int';
 		} elseif ($type === 'number' && $format === 'float') {
 			return 'float';
+		} elseif ($type === 'string' && $format === 'binary') {
+			return FileUpload::class;
 		} elseif ($type === 'string') {
 			return 'string';
 		} else {
