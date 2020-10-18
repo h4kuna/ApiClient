@@ -158,6 +158,8 @@ class ApiClientService
 					if ($d instanceof FileUpload) {
 						$sendingOnlyOneFile = $d;
 						$data[$key] = base64_encode($d->contents ?: '');
+					} elseif ($d instanceof \DateTime) {
+						$data[$key] = $d->format('Y-m-d H:i:s');
 					}
 				}
 			}
