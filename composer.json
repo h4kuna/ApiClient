@@ -18,10 +18,10 @@
 		"nette/security": "^3.0",
 		"nette/utils": "^3.0",
 		"league/oauth2-client": "^2.4",
-		"guzzlehttp/guzzle": "^6.3",
-		"ramsey/uuid": "^3.8",
+		"guzzlehttp/guzzle": "^6.3 | ^7.0",
+		"ramsey/uuid": "^3.8 | ^4.0",
 		"nette/php-generator": "^3.3",
-		"contributte/console": "^0.8.0"
+		"contributte/console": "^0.9"
 	},
 	"require-dev": {
 		"phpstan/phpstan": "^0.12",
