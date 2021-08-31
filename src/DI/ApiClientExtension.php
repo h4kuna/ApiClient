@@ -23,11 +23,15 @@ class ApiClientExtension extends CompilerExtension
 {
 	public function getConfigSchema(): Schema
 	{
+		$credentialsTempTokenFileDefault = isset($this->getContainerBuilder()->parameters['tempDir']) ?
+			$this->getContainerBuilder()->parameters['tempDir'] . '/credentialsTempTokenFile' :
+			null;
+
 		return Expect::structure([
 			'baseUrl' => Expect::string(),
 			'schemaUrl' => Expect::string('/v1/schema'),
 			'generatedModelPath' => Expect::string(),
-			'clientCredentialsTempTokenFile' => Expect::string(),
+			'clientCredentialsTempTokenFile' => Expect::string($credentialsTempTokenFileDefault),
 			'onlyPathsStartWith' => Expect::string('/v1/'),
 		]);
 	}
