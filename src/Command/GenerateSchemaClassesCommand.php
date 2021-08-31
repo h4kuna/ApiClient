@@ -9,6 +9,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class GenerateSchemaClassesCommand extends Command
 {
+	protected static $defaultName = 'api:generate-classes';
+
 	private ResponsesClassesGeneratorService $responsesClassesGeneratorService;
 
 	public function __construct(ResponsesClassesGeneratorService $responsesClassesGeneratorService)
@@ -17,15 +19,10 @@ final class GenerateSchemaClassesCommand extends Command
 		$this->responsesClassesGeneratorService = $responsesClassesGeneratorService;
 	}
 
-	protected function configure(): void
-	{
-		$this->setName('api:generate-classes');
-	}
-
 	protected function execute(InputInterface $input, OutputInterface $output): int
 	{
 		$this->responsesClassesGeneratorService->generate();
-		$output->write('Classes were generated.');
-		return 0;
+		$output->writeln('Classes were generated.');
+		return self::SUCCESS;
 	}
 }
