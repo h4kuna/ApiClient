@@ -8,19 +8,24 @@ use MirkoHuttner\ApiClient\RequestValue\BaseRequestValue;
 use MirkoHuttner\ApiClient\ValueObject\RequestParameter;
 use MirkoHuttner\ApiClient\ValueObject\Response;
 use MirkoHuttner\ApiClient\ValueObject\ResponseProperty;
+use Nette\Http\Url;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
 
 class ResponsesClassesGeneratorService
 {
+	private Url $url;
+
 	private EndpointSchemaTranslatorService $endpointSchemaTranslatorService;
 
 	private PhpFileFromNamespaceCreatorService $phpFileFromNamespaceCreatorService;
 
 	public function __construct(
+		Url $url,
 		EndpointSchemaTranslatorService $endpointSchemaTranslatorService,
 		PhpFileFromNamespaceCreatorService $phpFileFromNamespaceCreatorService
 	) {
+		$this->url = $url;
 		$this->endpointSchemaTranslatorService = $endpointSchemaTranslatorService;
 		$this->phpFileFromNamespaceCreatorService = $phpFileFromNamespaceCreatorService;
 	}
@@ -55,7 +60,7 @@ class ResponsesClassesGeneratorService
 		}
 
 		// url
-		$path = str_replace('/v1', '', $response->path);
+		$path = str_replace($this->url->getPath(), '', $response->path);
 		$getUrl = $endpointClass->addMethod('getUrl');
 		$getUrl->setReturnType('string');
 		$getUrl->setBody("return '" . $path . "';");
