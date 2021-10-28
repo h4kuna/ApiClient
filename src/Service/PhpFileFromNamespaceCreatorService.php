@@ -4,6 +4,7 @@ namespace MirkoHuttner\ApiClient\Service;
 
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
+use Nette\Utils\Strings;
 
 class PhpFileFromNamespaceCreatorService
 {
@@ -14,18 +15,23 @@ class PhpFileFromNamespaceCreatorService
 		$this->basePath = $basePath;
 	}
 
-	public function create(PhpNamespace $namespace): void
+	public function create(PhpNamespace $namespace, string $ignorePath = ''): void
 	{
-		$path = $this->createDir($namespace);
+		$path = $this->createDir($namespace, $ignorePath);
 		foreach ($namespace->getClasses() as $class) {
 			$class->addComment('This class is auto-generated. Do not modify it manually!');
 			$this->createPhpFile($class, $path);
 		}
 	}
 
-	private function createDir(PhpNamespace $namespace): string
+	private function createDir(PhpNamespace $namespace, string $ignorePath = ''): string
 	{
-		$fullPath = $this->basePath . str_replace('\\', '/', $namespace->getName());
+		$namespaceForPath = $namespace->getName();
+		if ($ignorePath !== '') {
+			$namespaceForPath = Strings::replace($namespaceForPath, sprintf('/^%s/', preg_quote($ignorePath, '/')));
+		}
+
+		$fullPath = $this->basePath . str_replace('\\', '/', $namespaceForPath);
 		if (!file_exists($fullPath)) {
 			mkdir($fullPath, 0777, true);
 		}

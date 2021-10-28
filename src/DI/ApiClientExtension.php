@@ -31,6 +31,7 @@ class ApiClientExtension extends CompilerExtension
 
 		return Expect::structure([
 			'baseUrl' => Expect::string(),
+			'namespaceStart' => Expect::string(''),
 			'schemaUrl' => Expect::string('/v1/schema'),
 			'generatedModelPath' => Expect::string(),
 			'clientCredentialsTempTokenFile' => Expect::string($credentialsTempTokenFileDefault),
@@ -55,7 +56,7 @@ class ApiClientExtension extends CompilerExtension
 
 		$builder->addDefinition($this->prefix('responsesClassesGeneratorService'))
 			->setFactory(ResponsesClassesGeneratorService::class)
-			->setArguments([new Statement(Url::class, [$config->baseUrl])]);
+			->setArguments([$config->namespaceStart, new Statement(Url::class, [$config->baseUrl])]);
 
 		// client
 		$builder->addDefinition($this->prefix('clientCredentialsGrantService'))
