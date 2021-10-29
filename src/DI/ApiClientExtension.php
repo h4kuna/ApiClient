@@ -16,6 +16,8 @@ use MirkoHuttner\ApiClient\Service\UserCacheService;
 use MirkoHuttner\ApiClient\User\Authenticator;
 use MirkoHuttner\ApiClient\User\UserStorage;
 use Nette\DI\CompilerExtension;
+use Nette\DI\Definitions\Statement;
+use Nette\Http\Url;
 use Nette\Schema\Expect;
 use Nette\Schema\Schema;
 
@@ -23,11 +25,16 @@ class ApiClientExtension extends CompilerExtension
 {
 	public function getConfigSchema(): Schema
 	{
+		$credentialsTempTokenFileDefault = isset($this->getContainerBuilder()->parameters['tempDir']) ?
+			$this->getContainerBuilder()->parameters['tempDir'] . '/credentialsTempTokenFile' :
+			null;
+
 		return Expect::structure([
 			'baseUrl' => Expect::string(),
+			'namespaceStart' => Expect::string(''),
 			'schemaUrl' => Expect::string('/v1/schema'),
 			'generatedModelPath' => Expect::string(),
-			'clientCredentialsTempTokenFile' => Expect::string(),
+			'clientCredentialsTempTokenFile' => Expect::string($credentialsTempTokenFileDefault),
 			'onlyPathsStartWith' => Expect::string('/v1/'),
 		]);
 	}
@@ -48,7 +55,8 @@ class ApiClientExtension extends CompilerExtension
 			->setFactory(PhpFileFromNamespaceCreatorService::class, [$config->generatedModelPath]);
 
 		$builder->addDefinition($this->prefix('responsesClassesGeneratorService'))
-			->setFactory(ResponsesClassesGeneratorService::class);
+			->setFactory(ResponsesClassesGeneratorService::class)
+			->setArguments([$config->namespaceStart, new Statement(Url::class, [$config->baseUrl])]);
 
 		// client
 		$builder->addDefinition($this->prefix('clientCredentialsGrantService'))

@@ -3,6 +3,7 @@
 namespace MirkoHuttner\ApiClient\Service;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use League\OAuth2\Client\Provider\GenericProvider;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use MirkoHuttner\ApiClient\Exception\BadRequestException;
@@ -176,7 +177,7 @@ class ApiClientService
 		return $this->provider->getAuthenticatedRequest($method, $this->baseUrl . $url, $token, $options);
 	}
 
-	protected function getClient(): Client
+	protected function getClient(): ClientInterface
 	{
 		return new Client;
 	}

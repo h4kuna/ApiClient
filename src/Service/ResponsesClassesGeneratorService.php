@@ -8,19 +8,28 @@ use MirkoHuttner\ApiClient\RequestValue\BaseRequestValue;
 use MirkoHuttner\ApiClient\ValueObject\RequestParameter;
 use MirkoHuttner\ApiClient\ValueObject\Response;
 use MirkoHuttner\ApiClient\ValueObject\ResponseProperty;
+use Nette\Http\Url;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
 
 class ResponsesClassesGeneratorService
 {
+	private string $namespaceStart;
+
+	private Url $url;
+
 	private EndpointSchemaTranslatorService $endpointSchemaTranslatorService;
 
 	private PhpFileFromNamespaceCreatorService $phpFileFromNamespaceCreatorService;
 
 	public function __construct(
+		string $namespaceStart,
+		Url $url,
 		EndpointSchemaTranslatorService $endpointSchemaTranslatorService,
 		PhpFileFromNamespaceCreatorService $phpFileFromNamespaceCreatorService
 	) {
+		$this->namespaceStart = self::normalizeNamespace($namespaceStart);
+		$this->url = $url;
 		$this->endpointSchemaTranslatorService = $endpointSchemaTranslatorService;
 		$this->phpFileFromNamespaceCreatorService = $phpFileFromNamespaceCreatorService;
 	}
@@ -55,7 +64,7 @@ class ResponsesClassesGeneratorService
 		}
 
 		// url
-		$path = str_replace('/v1', '', $response->path);
+		$path = str_replace($this->url->getPath(), '', $response->path);
 		$getUrl = $endpointClass->addMethod('getUrl');
 		$getUrl->setReturnType('string');
 		$getUrl->setBody("return '" . $path . "';");
@@ -149,7 +158,7 @@ class ResponsesClassesGeneratorService
 			$endpointClass->removeMethod('__construct');
 		}
 
-		$this->phpFileFromNamespaceCreatorService->create($namespace);
+		$this->phpFileFromNamespaceCreatorService->create($namespace, $this->namespaceStart);
 		return $namespace;
 	}
 
@@ -199,7 +208,7 @@ class ResponsesClassesGeneratorService
 			$constructor->addBody($body);
 		}
 
-		$this->phpFileFromNamespaceCreatorService->create($namespace);
+		$this->phpFileFromNamespaceCreatorService->create($namespace, $this->namespaceStart);
 		return $namespace;
 	}
 
@@ -263,7 +272,7 @@ class ResponsesClassesGeneratorService
 			$class->removeMethod('__construct');
 		}
 
-		$this->phpFileFromNamespaceCreatorService->create($namespace);
+		$this->phpFileFromNamespaceCreatorService->create($namespace, $this->namespaceStart);
 		return $namespace;
 	}
 
@@ -278,14 +287,14 @@ class ResponsesClassesGeneratorService
 
 	private function getNamespace(Response $response): string
 	{
+		$needle = '\\';
 		$p = substr($response->path, 0, strrpos($response->path, '/') + 1);
 		$p = $this->replaceDash($p);
-		$p = str_replace('/', '\\', $p);
+		$p = str_replace('/', $needle, $p);
 		$p = substr($p, 1);
 		$p = ucfirst($p);
 
 		$lastPos = 0;
-		$needle = '\\';
 		$positions = [];
 		while (($lastPos = strpos($p, $needle, $lastPos)) !== false) {
 			$positions[] = $lastPos;
@@ -299,7 +308,7 @@ class ResponsesClassesGeneratorService
 		}
 
 		$p = substr($p, 0, strlen($p) - 1) . '\Model';
-		return str_replace('\\', 'Module\\', $p);
+		return $this->namespaceStart . str_replace($needle, 'Module\\', $p);
 	}
 
 	private function replaceDash(string $input): string
@@ -317,4 +326,16 @@ class ResponsesClassesGeneratorService
 		}
 		return str_replace($needle, '', $input);
 	}
+
+
+	private static function normalizeNamespace(string $namespaceStart): string
+	{
+		$namespaceStart = trim($namespaceStart, '\\ ');
+		if ($namespaceStart === '') {
+			return '';
+		}
+
+		return $namespaceStart . '\\';
+	}
+
 }
