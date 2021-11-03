@@ -150,7 +150,7 @@ class ResponsesClassesGeneratorService
 		if ($endpointClass->getProperties()) {
 			$body = '';
 			foreach ($endpointClass->getProperties() as $property) {
-				$constructor->addParameter($property->getName())->setType($property->getType());
+				$constructor->addParameter($property->getName())->setType((string) $property->getType());
 				$body .= '$this->' . $property->getName() . ' = ' . '$' . $property->getName() . ";\n";
 			}
 			$constructor->addBody($body);
