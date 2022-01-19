@@ -5,11 +5,10 @@ namespace MirkoHuttner\ApiClient\User;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use MirkoHuttner\ApiClient\Service\PasswordGrantService;
 use MirkoHuttner\ApiClient\Service\UserByTokenService;
-use Nette\Security\AuthenticationException;
-use Nette\Security\IAuthenticator;
-use Nette\Security\IIdentity;
+use MirkoHuttner\ApiClient\User\Exceptions;
+use Nette\Security;
 
-final class Authenticator implements IAuthenticator
+final class Authenticator implements Security\IAuthenticator
 {
 	public const REGISTRATION_MAIL_NOT_CONFIRMED = 3598;
 	public const USER_BLOCKED = 3599;
@@ -24,23 +23,22 @@ final class Authenticator implements IAuthenticator
 		$this->userByTokenService = $userByTokenService;
 	}
 
-	public function authenticate(array $credentials): IIdentity
+	public function authenticate(array $credentials): Security\IIdentity
 	{
 		try {
-			list($email, $password) = $credentials;
+			[$email, $password] = $credentials;
 			$t = $this->passwordGrantService->getAccessToken($email, $password);
 			$user = $this->userByTokenService->getUserByToken($t);
 		} catch (IdentityProviderException $exception) {
-			$code = self::INVALID_CREDENTIAL;
 			$response = $exception->getResponseBody();
 			if (is_array($response) && isset($response['error'])) {
 				if ($response['error'] === 'user_is_blocked') {
-					$code = self::USER_BLOCKED;
+					throw new Exceptions\UserIsBlockedException();
 				} elseif ($response['error'] === 'registration_mail_not_confirmed') {
-					$code = self::REGISTRATION_MAIL_NOT_CONFIRMED;
+					throw new Exceptions\RegistrationEmailNotConfirmedException();
 				}
 			}
-			throw new AuthenticationException("", $code);
+			throw new Exceptions\InvalidCredentialException();
 		}
 
 		return $user;

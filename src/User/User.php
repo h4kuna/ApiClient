@@ -4,6 +4,7 @@ namespace MirkoHuttner\ApiClient\User;
 
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use MirkoHuttner\ApiClient\Service\UserCacheService;
+use MirkoHuttner\ApiClient\User\Exceptions;
 use Nette\Security\IAuthenticator;
 use Nette\Security\IAuthorizator;
 use Nette\Security\IUserStorage;
@@ -29,10 +30,22 @@ abstract class User extends \Nette\Security\User
 	public function getAuthToken(): ?AccessTokenInterface
 	{
 		$token = $this->getStorage()->getAuthToken();
-		if (!$token || $token->hasExpired()) {
+		if ($token === null || $token->hasExpired()) {
 			return null;
-		} else {
-			return $token;
 		}
+
+		return $token;
 	}
+
+
+	/**
+	 * @throws Exceptions\InvalidCredentialException
+	 * @throws Exceptions\RegistrationEmailNotConfirmedException
+	 * @throws Exceptions\UserIsBlockedException
+	 */
+	public function login($user, string $password = null): void
+	{
+		parent::login($user, $password);
+	}
+
 }

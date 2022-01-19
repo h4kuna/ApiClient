@@ -17,6 +17,10 @@ class PasswordGrantService
 		$this->provider = $provider;
 	}
 
+
+	/**
+	 * @throws IdentityProviderException
+	 */
 	public function getAccessToken(string $username, string $password): AccessTokenInterface
 	{
 		return $this->provider->getAccessToken(self::GRANT, ['username' => $username, 'password' => $password]);
