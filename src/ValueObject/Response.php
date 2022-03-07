@@ -30,6 +30,8 @@ class Response
 	public bool $isBinary = false;
 
 	public bool $hasCount = false;
+	
+	public string $source = '';
 
 	public function __construct(string $method, string $path)
 	{

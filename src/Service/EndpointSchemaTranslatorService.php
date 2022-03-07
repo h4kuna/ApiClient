@@ -36,6 +36,7 @@ class EndpointSchemaTranslatorService
 		foreach ($paths as $pathName => $path) {
 			foreach ($path as $method => $params) {
 				$r = new Response(strtoupper($method), $pathName);
+				$r->source = isset($params->source) ? base64_decode($params->source) : '';
 
 				// parameters in query
 				$queryParams = null;

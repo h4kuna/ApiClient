@@ -54,6 +54,10 @@ class ResponsesClassesGeneratorService
 		$namespace->addUse(ApiClientService::class);
 		$constructor = $endpointClass->addMethod('__construct');
 
+		if ($response->source !== '') {
+			$endpointClass->addComment(sprintf('@see %s', $response->source));
+		}
+
 		// auth type
 		if ($response->authGrantType) {
 			$getAuthType = $endpointClass->addMethod('getAuthType');
