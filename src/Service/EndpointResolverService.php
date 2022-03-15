@@ -21,6 +21,8 @@ class EndpointResolverService
 
 	private User $user;
 
+	private ?ResponseInterface $lastResponse = null;
+
 	public function __construct(
 		ApiClientService $apiClientService,
 		ClientCredentialsGrantService $clientCredentialsGrantService,
@@ -64,6 +66,7 @@ class EndpointResolverService
 					throw new UnsupportedHttpMethodException();
 			}
 
+			$this->lastResponse = $response;
 			$data = null;
 			if ($endpoint->getEntityClassName()) {
 				$d = $this->getData($response, $endpoint);
@@ -79,6 +82,15 @@ class EndpointResolverService
 			$this->user->logout(true);
 			throw $exception;
 		}
+	}
+
+	public function getLastResponse(): ResponseInterface
+	{
+		if ($this->lastResponse === null) {
+			throw new \RuntimeException('First time call api.');
+		}
+
+		return $this->lastResponse;
 	}
 
 	protected function getData(ResponseInterface $response, IEndpoint $endpoint): ResponseDataCount
