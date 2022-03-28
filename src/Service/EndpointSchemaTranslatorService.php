@@ -157,7 +157,7 @@ class EndpointSchemaTranslatorService
 			return 'bool';
 		} elseif ($type === 'array') {
 			return 'array';
-		} elseif ($type === 'integer') {
+		} elseif ($type === 'integer' || $type === 'int') {
 			return 'int';
 		} elseif ($type === 'number' && $format === 'float') {
 			return 'float';
