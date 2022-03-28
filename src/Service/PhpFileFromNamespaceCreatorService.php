@@ -4,11 +4,18 @@ namespace MirkoHuttner\ApiClient\Service;
 
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
+use Nette\Utils\FileSystem;
 use Nette\Utils\Strings;
 
 class PhpFileFromNamespaceCreatorService
 {
 	private string $basePath;
+
+	/**
+	 * @var array<string, true>
+	 */
+	private array $purgeDirs = [];
+
 
 	public function __construct(string $basePath)
 	{
@@ -31,10 +38,23 @@ class PhpFileFromNamespaceCreatorService
 			$namespaceForPath = Strings::replace($namespaceForPath, sprintf('/^%s/', preg_quote($ignorePath, '/')));
 		}
 
-		$fullPath = $this->basePath . str_replace('\\', '/', $namespaceForPath);
-		if (!file_exists($fullPath)) {
-			mkdir($fullPath, 0777, true);
+		return $this->purgeDir(...explode('\\', $namespaceForPath));
+	}
+
+
+	private function purgeDir(string ...$namepace): string
+	{
+		if (isset($namepace[0])) {
+			$rootDir = $this->basePath . $namepace[0];
+			if (!isset($this->purgeDirs[$rootDir])) {
+				FileSystem::delete($rootDir);
+				$this->purgeDirs[$rootDir] = true;
+			}
 		}
+
+		$fullPath = $this->basePath . implode(DIRECTORY_SEPARATOR, $namepace);
+		FileSystem::createDir($fullPath, 0755);
+
 		return $fullPath;
 	}
 
@@ -54,4 +74,5 @@ class PhpFileFromNamespaceCreatorService
 			throw new \RuntimeException('Cannot open file: ' . $fullPath);
 		}
 	}
+
 }
