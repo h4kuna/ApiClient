@@ -30,19 +30,7 @@ class EntityMapper
 					$type = $parameter->getType();
 
 					if (isset($data->$name)) {
-						$val = $data->$name;
-						if ($val instanceof \stdClass && !$type) {
-							$val = (array)$val;
-						} elseif ($type && is_string($val) && $type->getName() === 'Ramsey\Uuid\UuidInterface' && Uuid::isValid($val)) {
-							$val = Uuid::fromString($val);
-						} elseif ($val instanceof \stdClass && $type && $type->getName() === 'array') {
-							$val = (array)$val;
-						} elseif ($val instanceof \stdClass && $type) {
-							$val = self::create($val, $type->getName());
-						} elseif ($val && $type && $type->getName() === 'DateTime') {
-							$val = new \DateTime($val);
-						}
-						$constructorParameters[$parameter->getName()] = $val;
+						$constructorParameters[$parameter->getName()] = self::transformValue($data->$name, $type);
 					} elseif ($type && $type->allowsNull()) {
 						$constructorParameters[$parameter->getName()] = null;
 					} elseif ($type) {
@@ -68,19 +56,7 @@ class EntityMapper
 			foreach ($rc->getProperties() as $property) {
 				$pn = $property->getName();
 				if (!key_exists($pn, $constructorParameters) && isset($data->$pn)) {
-					$val = $data->$pn;
-					$type = $property->getType();
-					if ($val instanceof \stdClass && !$type) {
-						$val = (array)$data->$pn;
-					} elseif ($type && $type->getName() === 'Ramsey\Uuid\UuidInterface' && Uuid::isValid($data->$pn)) {
-						$val = Uuid::fromString($data->$pn);
-					} elseif ($val instanceof \stdClass && $type && $type->getName() === 'array') {
-						$val = (array)$data->$pn;
-					} elseif ($val instanceof \stdClass && $type) {
-						$val = self::create($data->$pn, $type->getName());
-					} elseif ($val && $type && $type->getName() === 'DateTime') {
-						$val = new \DateTime($val);
-					}
+					$val = self::transformValue($data->$pn, $property->getType());
 
 					$mn = 'set' . ucfirst($pn);
 					if (method_exists($entity, $mn)) {
@@ -96,4 +72,33 @@ class EntityMapper
 			throw new UnexpectedStructureReturnedException();
 		}
 	}
+
+
+	/**
+	 * @param mixed $val
+	 * @return mixed
+	 */
+	private static function transformValue($val, ?\ReflectionNamedType $type)
+	{
+		if ($val instanceof \stdClass && !$type) {
+			$val = (array) $val;
+		} elseif ($type && is_string($val) && $type->getName() === 'Ramsey\Uuid\UuidInterface' && Uuid::isValid($val)) {
+			$val = Uuid::fromString($val);
+		} elseif ($val instanceof \stdClass && $type && $type->getName() === 'array') {
+			$val = (array) $val;
+		} elseif ($val instanceof \stdClass && $type) {
+			$val = self::create($val, $type->getName());
+		} elseif ($val && $type && is_a($type->getName(), \DateTimeInterface::class, true)) {
+			$class = $type->getName();
+
+			if (is_numeric($val)) {
+				return (new $class("@$val"))->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+			}
+
+			return new $class($val);
+		}
+
+		return $val;
+	}
+
 }
