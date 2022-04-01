@@ -2,7 +2,7 @@
 
 namespace MirkoHuttner\ApiClient\RequestValue;
 
-class BaseRequestValue
+class BaseRequestValue extends \stdClass
 {
 	public function toArray(): array
 	{
