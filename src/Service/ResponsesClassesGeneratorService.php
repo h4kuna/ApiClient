@@ -207,7 +207,7 @@ class ResponsesClassesGeneratorService
 			$body = '';
 			foreach ($constructorParams as $param) {
 				$constructor->addParameter($param->name)->setType($param->type);
-				$body .= '$this->' . $param->name . ' = ' . '$' . $param->name . ";\n";
+				$body .= '$this->' . $param->name . ' = $' . $param->name . ";\n";
 			}
 			$constructor->addBody($body);
 		}
@@ -221,7 +221,7 @@ class ResponsesClassesGeneratorService
 	 * @param ResponseProperty[]|null $props
 	 * @return PhpNamespace
 	 */
-	private function generateResponseEntity(Response $response, ?array $props = null, ?string $subName = null): PhpNamespace
+	private function generateResponseEntity(Response $response, ?array $props = null, string $subName = ''): PhpNamespace
 	{
 		if (!$props) {
 			$props = $response->responseProperties;
@@ -231,7 +231,7 @@ class ResponsesClassesGeneratorService
 		}
 
 		$suffix = 'ResponseEntity';
-		$className = ($subName ? ucfirst($subName) : '') . $this->getClassName($response) . $suffix;
+		$className = ucfirst($subName) . $this->getClassName($response) . $suffix;
 		$namespaceName = $this->getNamespace($response) . '\\' . $suffix;
 
 		$namespace = new PhpNamespace($namespaceName);
@@ -269,7 +269,7 @@ class ResponsesClassesGeneratorService
 			$body = '';
 			foreach ($constructorParams as $param) {
 				$constructor->addParameter($param->name)->setType($param->type);
-				$body .= '$this->' . $param->name . ' = ' . '$' . $param->name . ";\n";
+				$body .= '$this->' . $param->name . ' = $' . $param->name . ";\n";
 			}
 			$constructor->addBody($body);
 		} else {
@@ -283,54 +283,41 @@ class ResponsesClassesGeneratorService
 	private function getClassName(Response $response): string
 	{
 		$p = substr($response->path, strrpos($response->path, '/') + 1);
-		$p = $this->replaceDash($p);
+		$p = self::replaceDash($p);
 		$p = str_replace('{uuid}', 'Detail', $p);
-		$className =  $p . ucfirst(strtolower($response->method));
-		return ucfirst($className);
+
+		return ucfirst($p . ucfirst(strtolower($response->method)));
 	}
 
 	private function getNamespace(Response $response): string
 	{
 		$needle = '\\';
-		$p = substr($response->path, 0, strrpos($response->path, '/') + 1);
-		$p = $this->replaceDash($p);
-		$p = str_replace('/', $needle, $p);
-		$p = substr($p, 1);
-		$p = ucfirst($p);
+		$p = substr($response->path, 0, strrpos($response->path, '/'));
+		$p = self::replaceDash($p);
+		$p = ltrim(self::replaceAndUpperChar($p, '/', $needle) . $needle . 'Model', $needle);
 
-		$lastPos = 0;
-		$positions = [];
-		while (($lastPos = strpos($p, $needle, $lastPos)) !== false) {
-			$positions[] = $lastPos;
-			$lastPos += strlen($needle);
-		}
-
-		foreach ($positions as $position) {
-			if (isset($p[$position + 1])) {
-				$p[$position + 1] = strtoupper($p[$position + 1]);
-			}
-		}
-
-		$p = substr($p, 0, strlen($p) - 1) . '\Model';
 		return $this->namespaceStart . str_replace($needle, 'Module\\', $p);
 	}
 
-	private function replaceDash(string $input): string
+	/**
+	 * foo-bar => fooBar
+	 */
+	private static function replaceDash(string $input): string
 	{
-		$lastPos = 0;
-		$needle = '-';
-		$positions = [];
-		while (($lastPos = strpos($input, $needle, $lastPos)) !== false) {
-			$positions[] = $lastPos;
-			$lastPos += strlen($needle);
-		}
-
-		foreach ($positions as $position) {
-			$input[$position + 1] = strtoupper($input[$position + 1]);
-		}
-		return str_replace($needle, '', $input);
+		return self::replaceAndUpperChar($input, '-');
 	}
 
+	/**
+	 * foo{$char}bar -> foo{$replace}Bar
+	 */
+	private static function replaceAndUpperChar(string $haystack, string $char, string $replace = ''): string
+	{
+		return (string) preg_replace_callback(
+			'/' . preg_quote($char, '/') . '([a-z0-9])/',
+			static fn($find) => ($replace . strtoupper($find[1])),
+			$haystack
+		);
+	}
 
 	private static function normalizeNamespace(string $namespaceStart): string
 	{
