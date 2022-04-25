@@ -86,16 +86,18 @@ class EntityMapper
 			$val = Uuid::fromString($val);
 		} elseif ($val instanceof \stdClass && $type && $type->getName() === 'array') {
 			$val = (array) $val;
-		} elseif ($val instanceof \stdClass && $type) {
-			$val = self::create($val, $type->getName());
-		} elseif ($val && $type && is_a($type->getName(), \DateTimeInterface::class, true)) {
+		} elseif ($type !== null && is_a($type->getName(), \DateTimeInterface::class, true)) {
 			$class = $type->getName();
 
 			if (is_numeric($val)) {
 				return (new $class("@$val"))->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+			} else if ($val instanceof \stdClass) {
+				return new $class($val->date, new \DateTimeZone($val->timezone));
 			}
 
-			return new $class($val);
+			return new $class((string) $val);
+		} elseif ($val instanceof \stdClass && $type) {
+			$val = self::create($val, $type->getName());
 		}
 
 		return $val;
