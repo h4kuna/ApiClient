@@ -50,6 +50,7 @@ class ResponsesClassesGeneratorService
 		$namespace = new PhpNamespace($namespaceName);
 		$namespace->addUse(BaseEndpoint::class);
 		$endpointClass = $namespace->addClass($className);
+		$endpointClass->setFinal();
 		$endpointClass->addExtend(BaseEndpoint::class);
 		$namespace->addUse(ApiClientService::class);
 		$constructor = $endpointClass->addMethod('__construct');
@@ -182,6 +183,7 @@ class ResponsesClassesGeneratorService
 
 		$namespace = new PhpNamespace($namespaceName);
 		$class = $namespace->addClass($className);
+		$class->setFinal();
 		$namespace->addUse(BaseRequestValue::class);
 		$class->addExtend(BaseRequestValue::class);
 
@@ -236,6 +238,7 @@ class ResponsesClassesGeneratorService
 
 		$namespace = new PhpNamespace($namespaceName);
 		$class = $namespace->addClass($className);
+		$class->setFinal();
 		$namespace->addUse(BaseEntity::class);
 		$class->addExtend(BaseEntity::class);
 		$constructor = $class->addMethod('__construct');
