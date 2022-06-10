@@ -35,7 +35,7 @@ class ApiClientExtension extends CompilerExtension
 			'schemaUrl' => Expect::string('/v1/schema'),
 			'generatedModelPath' => Expect::string(),
 			'clientCredentialsTempTokenFile' => Expect::string($credentialsTempTokenFileDefault),
-			'onlyPathsStartWith' => Expect::string('/v1/'),
+			'onlyPathsStartWith' => Expect::listOf('string')->default(['/v1/']),
 		]);
 	}
 

@@ -14,11 +14,16 @@ class EndpointSchemaTranslatorService
 
 	private string $schemaUrl;
 
-	private string $onlyPathsStartWith;
+	/** @var array<string> */
+	private array $onlyPathsStartWith;
 
+
+	/**
+	 * @param array<string> $onlyPathsStartWith
+	 */
 	public function __construct(
 		string $schemaUrl,
-		string $onlyPathsStartWith,
+		array $onlyPathsStartWith,
 		ApiClientService $apiClientService
 	) {
 		$this->schemaUrl = $schemaUrl;
@@ -182,8 +187,10 @@ class EndpointSchemaTranslatorService
 
 		$paths = [];
 		foreach ($data->paths as $pathName => $path) {
-			if (Strings::startsWith($pathName, $this->onlyPathsStartWith)) {
-				$paths[$pathName] = $path;
+			foreach ($this->onlyPathsStartWith as $mask) {
+				if (Strings::startsWith($pathName, $mask)) {
+					$paths[$pathName] = $path;
+				}
 			}
 		}
 
