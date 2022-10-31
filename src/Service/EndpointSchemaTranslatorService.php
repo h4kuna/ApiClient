@@ -188,7 +188,7 @@ class EndpointSchemaTranslatorService
 		$paths = [];
 		foreach ($data->paths as $pathName => $path) {
 			foreach ($this->onlyPathsStartWith as $mask) {
-				if (Strings::startsWith($pathName, $mask)) {
+				if (Strings::startsWith($pathName, $mask) || "$pathName/" === $mask) {
 					$paths[$pathName] = $path;
 				}
 			}
