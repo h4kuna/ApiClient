@@ -51,7 +51,7 @@ class ResponsesClassesGeneratorService
 		$namespace->addUse(BaseEndpoint::class);
 		$endpointClass = $namespace->addClass($className);
 		$endpointClass->setFinal();
-		$endpointClass->addExtend(BaseEndpoint::class);
+		$endpointClass->setExtends(BaseEndpoint::class);
 		$namespace->addUse(ApiClientService::class);
 		$constructor = $endpointClass->addMethod('__construct');
 
@@ -185,7 +185,7 @@ class ResponsesClassesGeneratorService
 		$class = $namespace->addClass($className);
 		$class->setFinal();
 		$namespace->addUse(BaseRequestValue::class);
-		$class->addExtend(BaseRequestValue::class);
+		$class->setExtends(BaseRequestValue::class);
 
 		$constructorParams = [];
 		foreach ($params as $param) {
@@ -240,7 +240,7 @@ class ResponsesClassesGeneratorService
 		$class = $namespace->addClass($className);
 		$class->setFinal();
 		$namespace->addUse(BaseEntity::class);
-		$class->addExtend(BaseEntity::class);
+		$class->setExtends(BaseEntity::class);
 		$constructor = $class->addMethod('__construct');
 
 		$constructorParams = [];
