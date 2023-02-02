@@ -8,24 +8,24 @@ class Response
 
 	public string $path;
 
-	public ?string $authGrantType = null;
+	public string $authGrantType = '';
 
 	/**
-	 * @var ResponseProperty[]|null
+	 * @var array<ResponseProperty>
 	 */
-	public ?array $responseProperties = null;
+	public array $responseProperties = [];
 
 	public bool $responsePropertiesArray = false;
 
 	/**
-	 * @var RequestParameter[]|null
+	 * @var array<RequestParameter>
 	 */
-	public ?array $requestBodyParameters = null;
+	public array $requestBodyParameters = [];
 
 	/**
-	 * @var RequestParameter[]|null
+	 * @var array<RequestParameter>
 	 */
-	public ?array $requestQueryParameters = null;
+	public array $requestQueryParameters = [];
 
 	public bool $isBinary = false;
 

@@ -14,30 +14,38 @@ class UserByTokenService
 
 	private UserCacheService $userCacheService;
 
-	public function __construct(IIdentityEndpointResolverService $identityEndpointResolverService, UserCacheService $userCacheService)
+
+	public function __construct(
+		IIdentityEndpointResolverService $identityEndpointResolverService,
+		UserCacheService $userCacheService,
+	)
 	{
 		$this->identityEndpointResolverService = $identityEndpointResolverService;
 		$this->userCacheService = $userCacheService;
 	}
 
+
 	public function getUserByToken(AccessTokenInterface $token): UserIdentity
 	{
 		$cachedData = $this->userCacheService->get($token);
-		if ($cachedData) {
-			return $cachedData;
-		} else {
+		if ($cachedData === null) {
 			$identity = $this->identityEndpointResolverService->getIdentityByToken($token);
-			return $this->userCacheService->save($token, $identity);
+			$cachedData = $this->userCacheService->save($token, $identity);
 		}
+
+		return $cachedData;
 	}
+
 
 	public static function getCachePrefix(string $token): string
 	{
 		return self::CACHE_PREFIX . $token;
 	}
 
+
 	public static function getCacheExpiration(): string
 	{
 		return self::CACHE_EXPIRATION;
 	}
+
 }

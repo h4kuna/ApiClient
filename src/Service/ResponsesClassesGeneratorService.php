@@ -22,17 +22,20 @@ class ResponsesClassesGeneratorService
 
 	private PhpFileFromNamespaceCreatorService $phpFileFromNamespaceCreatorService;
 
+
 	public function __construct(
 		string $namespaceStart,
 		Url $url,
 		EndpointSchemaTranslatorService $endpointSchemaTranslatorService,
-		PhpFileFromNamespaceCreatorService $phpFileFromNamespaceCreatorService
-	) {
+		PhpFileFromNamespaceCreatorService $phpFileFromNamespaceCreatorService,
+	)
+	{
 		$this->namespaceStart = self::normalizeNamespace($namespaceStart);
 		$this->url = $url;
 		$this->endpointSchemaTranslatorService = $endpointSchemaTranslatorService;
 		$this->phpFileFromNamespaceCreatorService = $phpFileFromNamespaceCreatorService;
 	}
+
 
 	public function generate(): void
 	{
@@ -41,6 +44,7 @@ class ResponsesClassesGeneratorService
 			$this->generateEndpoint($response);
 		}
 	}
+
 
 	private function generateEndpoint(Response $response): PhpNamespace
 	{
@@ -60,7 +64,7 @@ class ResponsesClassesGeneratorService
 		}
 
 		// auth type
-		if ($response->authGrantType) {
+		if ($response->authGrantType !== '') {
 			$getAuthType = $endpointClass->addMethod('getAuthType');
 			$getAuthType->setReturnType('string');
 			$gt = $response->authGrantType;
@@ -96,7 +100,7 @@ class ResponsesClassesGeneratorService
 		// request parameters
 		$parametersType = ['body' => $response->requestBodyParameters, 'query' => $response->requestQueryParameters];
 		foreach ($parametersType as $type => $parameters) {
-			if (!$parameters) {
+			if ($parameters === []) {
 				continue;
 			}
 
@@ -104,9 +108,9 @@ class ResponsesClassesGeneratorService
 			$cs = $entityNs->getClasses();
 			/** @var ClassType $class */
 			$class = end($cs);
-			$csName = $entityNs->getName() . '\\' . ($class->getName() ?: '');
+			$csName = $entityNs->getName() . '\\' . ($class->getName() ?? '');
 			$namespace->addUse($csName);
-			$propName = lcfirst($class->getName() ?: '');
+			$propName = lcfirst($class->getName() ?? '');
 			$p = $endpointClass->addProperty($propName);
 			$p->setType($csName);
 
@@ -122,7 +126,7 @@ class ResponsesClassesGeneratorService
 		}
 
 		// response parameters
-		if ($response->responseProperties) {
+		if ($response->responseProperties !== []) {
 			$entityNs = $this->generateResponseEntity($response);
 			$cs = $entityNs->getClasses();
 			/** @var ClassType $class */
@@ -152,7 +156,7 @@ class ResponsesClassesGeneratorService
 		}
 
 		// constructor
-		if ($endpointClass->getProperties()) {
+		if ($endpointClass->getProperties() !== []) {
 			$body = '';
 			foreach ($endpointClass->getProperties() as $property) {
 				$constructor->addParameter($property->getName())->setType((string) $property->getType());
@@ -164,8 +168,10 @@ class ResponsesClassesGeneratorService
 		}
 
 		$this->phpFileFromNamespaceCreatorService->create($namespace, $this->namespaceStart);
+
 		return $namespace;
 	}
+
 
 	/**
 	 * @param Response $response
@@ -173,7 +179,7 @@ class ResponsesClassesGeneratorService
 	 */
 	private function generateRequestEntity(Response $response, array $params, string $type): PhpNamespace
 	{
-		if (!$params) {
+		if ($params === []) {
 			throw new \InvalidArgumentException('Response has no request parameters.');
 		}
 
@@ -194,9 +200,9 @@ class ResponsesClassesGeneratorService
 			$p->setType($param->type);
 			$p->setNullable($nullable);
 			if ($p->isNullable()) {
-				$p->setInitialized(true);
+				$p->setInitialized();
 			}
-			if ($param->description) {
+			if ($param->description !== '') {
 				$p->addComment($param->description);
 			}
 			if (!$nullable) {
@@ -204,7 +210,7 @@ class ResponsesClassesGeneratorService
 			}
 		}
 
-		if ($constructorParams) {
+		if ($constructorParams !== []) {
 			$constructor = $class->addMethod('__construct');
 			$body = '';
 			foreach ($constructorParams as $param) {
@@ -215,21 +221,27 @@ class ResponsesClassesGeneratorService
 		}
 
 		$this->phpFileFromNamespaceCreatorService->create($namespace, $this->namespaceStart);
+
 		return $namespace;
 	}
 
+
 	/**
 	 * @param Response $response
-	 * @param ResponseProperty[]|null $props
+	 * @param array<ResponseProperty> $props
 	 * @return PhpNamespace
 	 */
-	private function generateResponseEntity(Response $response, ?array $props = null, string $subName = ''): PhpNamespace
+	private function generateResponseEntity(
+		Response $response,
+		array $props = [],
+		string $subName = '',
+	): PhpNamespace
 	{
-		if (!$props) {
-			$props = $response->responseProperties;
-		}
-		if (!$props) {
-			throw new \InvalidArgumentException('Response has no properties.');
+		if ($props === []) {
+			$props = $response->responseProperties ?? [];
+			if ($props === []) {
+				throw new \InvalidArgumentException('Response has no properties.');
+			}
 		}
 
 		$suffix = 'ResponseEntity';
@@ -258,9 +270,9 @@ class ResponsesClassesGeneratorService
 			}
 			$p->setNullable($prop->nullable);
 			if ($p->isNullable()) {
-				$p->setInitialized(true);
+				$p->setInitialized();
 			}
-			if ($prop->description) {
+			if ($prop->description !== '') {
 				$p->addComment($prop->description);
 			}
 			if (!$prop->nullable) {
@@ -268,7 +280,7 @@ class ResponsesClassesGeneratorService
 			}
 		}
 
-		if ($constructorParams) {
+		if ($constructorParams !== []) {
 			$body = '';
 			foreach ($constructorParams as $param) {
 				$constructor->addParameter($param->name)->setType($param->type);
@@ -280,27 +292,33 @@ class ResponsesClassesGeneratorService
 		}
 
 		$this->phpFileFromNamespaceCreatorService->create($namespace, $this->namespaceStart);
+
 		return $namespace;
 	}
 
+
 	private function getClassName(Response $response): string
 	{
-		$p = substr($response->path, strrpos($response->path, '/') + 1);
+		$position = strrpos($response->path, '/');
+		$p = substr($response->path, $position === false ? 0 : ($position + 1));
 		$p = self::replaceDash($p);
 		$p = str_replace('{uuid}', 'Detail', $p);
 
 		return ucfirst($p . ucfirst(strtolower($response->method)));
 	}
 
+
 	private function getNamespace(Response $response): string
 	{
 		$needle = '\\';
-		$p = substr($response->path, 0, strrpos($response->path, '/'));
+		$position = strrpos($response->path, '/');
+		$p = substr($response->path, 0, $position === false ? null : $position);
 		$p = self::replaceDash($p);
 		$p = ltrim(self::replaceAndUpperChar($p, '/', $needle) . $needle . 'Model', $needle);
 
 		return $this->namespaceStart . str_replace($needle, 'Module\\', $p);
 	}
+
 
 	/**
 	 * foo-bar => fooBar
@@ -310,6 +328,7 @@ class ResponsesClassesGeneratorService
 		return self::replaceAndUpperChar($input, '-');
 	}
 
+
 	/**
 	 * foo{$char}bar -> foo{$replace}Bar
 	 */
@@ -317,10 +336,11 @@ class ResponsesClassesGeneratorService
 	{
 		return (string) preg_replace_callback(
 			'/' . preg_quote($char, '/') . '([a-z0-9])/',
-			static fn($find) => ($replace . strtoupper($find[1])),
-			$haystack
+			static fn ($find) => ($replace . strtoupper($find[1])),
+			$haystack,
 		);
 	}
+
 
 	private static function normalizeNamespace(string $namespaceStart): string
 	{

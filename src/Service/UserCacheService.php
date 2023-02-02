@@ -5,39 +5,45 @@ namespace MirkoHuttner\ApiClient\Service;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use MirkoHuttner\ApiClient\User\User;
 use MirkoHuttner\ApiClient\User\UserIdentity;
-use Nette\Caching\Cache;
+use Nette\Caching;
 
 class UserCacheService
 {
-	private CacheStorage $cacheStorage;
+	private Caching\Cache $cache;
 
-	public function __construct(CacheStorage $cacheStorage)
+
+	public function __construct()
 	{
-		$this->cacheStorage = $cacheStorage;
+		$this->cache = new Caching\Cache(new Caching\Storages\MemoryStorage());
 	}
+
 
 	public function invalidate(User $user): void
 	{
-		if (null !== $token = $user->getStorage()->getAuthToken()) {
+		if (null !== ($token = $user->getAuthToken())) {
 			$key = UserByTokenService::getCachePrefix($token->getToken());
-			$this->cacheStorage->getCache()->remove($key);
+			$this->cache->remove($key);
 		}
 	}
+
 
 	public function get(AccessTokenInterface $token): ?UserIdentity
 	{
 		$key = UserByTokenService::getCachePrefix($token->getToken());
-		$cachedData = $this->cacheStorage->getCache()->load($key);
-		if ($cachedData) {
-			return $cachedData;
-		}
-		return null;
+		$cachedData = $this->cache->load($key);
+		assert($cachedData instanceof UserIdentity || $cachedData === null);
+
+		return $cachedData;
 	}
+
 
 	public function save(AccessTokenInterface $token, UserIdentity $identity): UserIdentity
 	{
 		$key = UserByTokenService::getCachePrefix($token->getToken());
-		$this->cacheStorage->getCache()->save($key, $identity, [Cache::EXPIRE => UserByTokenService::getCacheExpiration()]);
+
+		$this->cache->save($key, $identity, [Caching\Cache::Expire => UserByTokenService::getCacheExpiration()]);
+
 		return $identity;
 	}
+
 }

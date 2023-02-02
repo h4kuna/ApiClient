@@ -15,11 +15,13 @@ class ClientCredentialsGrantService
 
 	private GenericProvider $provider;
 
+
 	public function __construct(string $clientCredentialsTempTokenFile, GenericProvider $provider)
 	{
 		$this->clientCredentialsTempTokenFile = $clientCredentialsTempTokenFile;
 		$this->provider = $provider;
 	}
+
 
 	public function getAccessToken(bool $invalidate = false): AccessTokenInterface
 	{
@@ -28,32 +30,38 @@ class ClientCredentialsGrantService
 		}
 
 		$tmp = $this->getTokenFromTemp();
-		if ($tmp && !$tmp->hasExpired() && ($tmp->getExpires() - self::SECONDS_TO_EXPIRATION) > time()) {
+		if ($tmp !== null && !$tmp->hasExpired() && $tmp->getExpires() !== null && ($tmp->getExpires() - self::SECONDS_TO_EXPIRATION) > time()) {
 			return $tmp;
-		} else {
-			return $this->getNewToken();
 		}
+
+		return $this->getNewToken();
 	}
+
 
 	private function getNewToken(): AccessTokenInterface
 	{
 		$token = $this->provider->getAccessToken(self::GRANT);
 		$this->storeToken($token);
+
 		return $token;
 	}
+
 
 	private function getTokenFromTemp(): ?AccessTokenInterface
 	{
 		$token = null;
 		if (file_exists($this->clientCredentialsTempTokenFile)) {
-			$token = unserialize(FileSystem::read($this->clientCredentialsTempTokenFile)) ?: null;
+			$token = unserialize(FileSystem::read($this->clientCredentialsTempTokenFile));
 			$token = $token instanceof AccessTokenInterface ? $token : null;
 		}
+
 		return $token;
 	}
+
 
 	private function storeToken(AccessTokenInterface $token): void
 	{
 		FileSystem::write($this->clientCredentialsTempTokenFile, serialize($token));
 	}
+
 }

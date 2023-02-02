@@ -3,35 +3,44 @@
 namespace MirkoHuttner\ApiClient\User;
 
 use League\OAuth2\Client\Token\AccessTokenInterface;
+use MirkoHuttner\ApiClient\Service\PasswordGrantService;
 use MirkoHuttner\ApiClient\Service\UserCacheService;
 use MirkoHuttner\ApiClient\User\Exceptions;
-use Nette\Security\IAuthenticator;
-use Nette\Security\IAuthorizator;
-use Nette\Security\IUserStorage;
+use Nette\Security\Authenticator;
+use Nette\Security\Authorizator;
+use Nette\Security\UserStorage;
 use Ramsey\Uuid\UuidInterface;
 
 /**
- * @method UserStorage getStorage()
  * @method UuidInterface|null getId()
+ * @method UserIdentity getIdentity()
  */
 abstract class User extends \Nette\Security\User
 {
-	private UserCacheService $userCacheService;
 
-	public function __construct(IUserStorage $storage, IAuthenticator $authenticator = null, IAuthorizator $authorizator = null, UserCacheService $userCacheService)
+	public function __construct(
+		UserStorage $storage,
+		Authenticator $authenticator = null,
+		Authorizator $authorizator = null,
+		private PasswordGrantService $passwordGrantService,
+	)
 	{
-		parent::__construct($storage, $authenticator, $authorizator);
-		$this->userCacheService = $userCacheService;
-		$this->onLoggedOut[] = function () {
-			$this->userCacheService->invalidate($this);
-		};
+		parent::__construct(null, $authenticator, $authorizator, $storage);
 	}
+
 
 	public function getAuthToken(): ?AccessTokenInterface
 	{
-		$token = $this->getStorage()->getAuthToken();
-		if ($token === null || $token->hasExpired()) {
-			return null;
+		$identity = $this->getIdentity();
+		$token = $identity->getAuthToken();
+		if ($token->hasExpired()) {
+			$token = $this->passwordGrantService->getRefreshToken($token);
+			if ($token === null) {
+				$this->logout(true);
+			} else {
+				$identity->setAuthToken($token);
+				$this->login($identity);
+			}
 		}
 
 		return $token;
@@ -43,7 +52,7 @@ abstract class User extends \Nette\Security\User
 	 * @throws Exceptions\RegistrationEmailNotConfirmedException
 	 * @throws Exceptions\UserIsBlockedException
 	 */
-	public function login($user, string $password = null): void
+	public function login($user, ?string $password = null): void
 	{
 		parent::login($user, $password);
 	}

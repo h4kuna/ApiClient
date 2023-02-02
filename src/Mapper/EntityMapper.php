@@ -80,7 +80,7 @@ class EntityMapper
 	 */
 	private static function transformValue($val, ?\ReflectionNamedType $type)
 	{
-		if ($val instanceof \stdClass && !$type) {
+		if ($val instanceof \stdClass && $type === null) {
 			$val = (array) $val;
 		} elseif ($type && is_string($val) && $type->getName() === 'Ramsey\Uuid\UuidInterface' && Uuid::isValid($val)) {
 			$val = Uuid::fromString($val);
@@ -95,8 +95,8 @@ class EntityMapper
 				return new $class($val->date, new \DateTimeZone($val->timezone));
 			}
 
-			return new $class((string) $val);
-		} elseif ($val instanceof \stdClass && $type) {
+			return new $class(strval($val));
+		} elseif ($val instanceof \stdClass && $type !== null) {
 			$val = self::create($val, $type->getName());
 		}
 

@@ -10,14 +10,14 @@ class ResponseProperty
 
 	public string $type;
 
-	public ?string $description;
+	public string $description;
 
 	/**
-	 * @var ResponseProperty[]|null
+	 * @var array<ResponseProperty>
 	 */
-	public ?array $children;
+	public array $children = [];
 
-	public function __construct(string $name, bool $nullable, string $type, ?string $description)
+	public function __construct(string $name, bool $nullable, string $type, string $description)
 	{
 		$this->name = $name;
 		$this->nullable = $nullable;

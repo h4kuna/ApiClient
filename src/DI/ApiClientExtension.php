@@ -4,7 +4,6 @@ namespace MirkoHuttner\ApiClient\DI;
 
 use MirkoHuttner\ApiClient\Command\GenerateSchemaClassesCommand;
 use MirkoHuttner\ApiClient\Service\ApiClientService;
-use MirkoHuttner\ApiClient\Service\CacheStorage;
 use MirkoHuttner\ApiClient\Service\ClientCredentialsGrantService;
 use MirkoHuttner\ApiClient\Service\EndpointResolverService;
 use MirkoHuttner\ApiClient\Service\EndpointSchemaTranslatorService;
@@ -14,7 +13,6 @@ use MirkoHuttner\ApiClient\Service\ResponsesClassesGeneratorService;
 use MirkoHuttner\ApiClient\Service\UserByTokenService;
 use MirkoHuttner\ApiClient\Service\UserCacheService;
 use MirkoHuttner\ApiClient\User\Authenticator;
-use MirkoHuttner\ApiClient\User\UserStorage;
 use Nette\DI\CompilerExtension;
 use Nette\DI\Definitions\Statement;
 use Nette\Http\Url;
@@ -38,6 +36,7 @@ class ApiClientExtension extends CompilerExtension
 			'onlyPathsStartWith' => Expect::listOf('string')->default(['/v1/']),
 		]);
 	}
+
 
 	public function loadConfiguration()
 	{
@@ -68,9 +67,6 @@ class ApiClientExtension extends CompilerExtension
 		$builder->addDefinition($this->prefix('passwordGrantService'))
 			->setFactory(PasswordGrantService::class);
 
-		$builder->addDefinition($this->prefix('cacheStorage'))
-			->setFactory(CacheStorage::class);
-
 		$builder->addDefinition($this->prefix('endpointResolverService'))
 			->setFactory(EndpointResolverService::class);
 
@@ -79,14 +75,11 @@ class ApiClientExtension extends CompilerExtension
 		$builder->addDefinition('security.authenticator')
 			->setFactory(Authenticator::class);
 
-		$builder->removeDefinition('security.userStorage');
-		$builder->addDefinition('security.userStorage')
-			->setFactory(UserStorage::class);
-
 		$builder->addDefinition($this->prefix('userCacheService'))
 			->setFactory(UserCacheService::class);
 
 		$builder->addDefinition($this->prefix('userByTokenService'))
 			->setFactory(UserByTokenService::class);
 	}
+
 }

@@ -24,12 +24,14 @@ class EndpointSchemaTranslatorService
 	public function __construct(
 		string $schemaUrl,
 		array $onlyPathsStartWith,
-		ApiClientService $apiClientService
-	) {
+		ApiClientService $apiClientService,
+	)
+	{
 		$this->schemaUrl = $schemaUrl;
 		$this->onlyPathsStartWith = $onlyPathsStartWith;
 		$this->apiClientService = $apiClientService;
 	}
+
 
 	/**
 	 * @return Response[]
@@ -44,43 +46,41 @@ class EndpointSchemaTranslatorService
 				$r->source = isset($params->source) ? base64_decode($params->source) : '';
 
 				// parameters in query
-				$queryParams = null;
+				$queryParams = [];
 				if (isset($params->parameters)) {
 					foreach ($params->parameters as $qParam) {
 						if ($qParam->in === 'query') {
 							if (!isset($qParam->allowEmptyValue)) {
 								$required = false;
 							} else {
-								$required = $qParam->allowEmptyValue ? false : true;
+								$required = !$qParam->allowEmptyValue;
 							}
 							if (isset($qParam->required) && $qParam->required) {
 								$required = true;
 							}
 
 							$schema = $qParam->schema;
-							$type = $this->resolveType($schema->type, isset($schema->format) ? $schema->format : null);
-							$description = isset($qParam->description) ? $qParam->description : null;
-							$queryParams[] = new RequestParameter($qParam->name, $required, $type, $description);
+							$type = $this->resolveType($schema->type, $schema->format ?? null);
+							$queryParams[] = new RequestParameter($qParam->name, $required, $type, $qParam->description ?? '');
 						}
 					}
 				}
 				$r->requestQueryParameters = $queryParams;
 
 				// request body parameters
-				$bodyParams = null;
+				$bodyParams = [];
 				if (isset($params->requestBody->content->{'application/json'}->schema)) {
 					$s = $params->requestBody->content->{'application/json'}->schema;
 					foreach ($s->properties as $name => $property) {
-						$required = isset($s->required) ? in_array($name, $s->required) : false;
-						$type = $this->resolveType($property->type, isset($property->format) ? $property->format : null);
-						$description = isset($s->description) ? $s->description : null;
-						$bodyParams[] = new RequestParameter($name, $required, $type, $description);
+						$required = isset($s->required) && in_array($name, $s->required);
+						$type = $this->resolveType($property->type, $property->format ?? null);
+						$bodyParams[] = new RequestParameter($name, $required, $type, $s->description ?? '');
 					}
 				}
 
 				// image file
 				if (isset($params->requestBody->content->{'image/jpeg'})) {
-					$bodyParams[] = new RequestParameter('image', true, FileUpload::class, null);
+					$bodyParams[] = new RequestParameter('image', true, FileUpload::class);
 				}
 
 				$r->requestBodyParameters = $bodyParams;
@@ -100,13 +100,13 @@ class EndpointSchemaTranslatorService
 								throw new \InvalidArgumentException('Type not supported. Type: ' . $data->type);
 							}
 
-							$values = $this->propertiesToResponse((array) $properties);
+							$values = $this->propertiesToResponse((array) $properties) ?? [];
 
 							$r->responseProperties = $values;
 							$r->responsePropertiesArray = $isArray;
 							$r->hasCount = isset($response->content->{'application/json'}->schema->properties->count);
 						} elseif (isset($response->content->{'application/pdf'})) {
-							$r->responseProperties = [new ResponseProperty('content', false, 'string', null)];
+							$r->responseProperties = [new ResponseProperty('content', false, 'string', '')];
 							$r->responsePropertiesArray = false;
 							$r->isBinary = true;
 						}
@@ -122,8 +122,10 @@ class EndpointSchemaTranslatorService
 				$responsesData[] = $r;
 			}
 		}
+
 		return $responsesData;
 	}
+
 
 	/**
 	 * @return ResponseProperty[]|null
@@ -137,24 +139,24 @@ class EndpointSchemaTranslatorService
 				$children = $this->propertiesToResponse((array) $property->properties);
 				$type = 'object';
 			} elseif ($property->type !== 'object') {
-				$type = $this->resolveType($property->type, isset($property->format) ? $property->format : null);
+				$type = $this->resolveType($property->type, $property->format ?? null);
 			} else {
 				return null;
 			}
-			$nullable = isset($property->nullable) ? $property->nullable : false;
-			$description = isset($property->description) ? $property->description : null;
+			$nullable = $property->nullable ?? false;
+			$description = $property->description ?? '';
 			$re = new ResponseProperty($name, $nullable, $type, $description);
-			$re->children = $children;
+			$re->children = $children ?? [];
 			$values[] = $re;
 		}
+
 		return $values;
 	}
 
+
 	private function resolveType(string $type, ?string $format): string
 	{
-		if ($type === 'string' && $format === 'date') {
-			return '\DateTime';
-		} elseif ($type === 'string' && $format === 'date-time') {
+		if ($type === 'string' && ($format === 'date' || $format === 'date-time')) {
 			return '\DateTime';
 		} elseif ($type === 'string' && $format === 'uuid') {
 			return '\Ramsey\Uuid\UuidInterface';
@@ -175,15 +177,21 @@ class EndpointSchemaTranslatorService
 		}
 	}
 
+
+	/**
+	 * @return array<string, array<string, \stdClass>>
+	 */
 	private function getSchemaPaths(): array
 	{
 		$response = $this->apiClientService->get($this->schemaUrl);
 
 		$data = $response->getBody()->getContents();
 		$data = json_decode($data);
-		if (!$data) {
+		if ($data === null || $data === false) {
 			throw new \InvalidArgumentException;
 		}
+		assert($data instanceof \stdClass);
+		assert(is_array($data->paths));
 
 		$paths = [];
 		foreach ($data->paths as $pathName => $path) {
@@ -196,4 +204,5 @@ class EndpointSchemaTranslatorService
 
 		return $paths;
 	}
+
 }

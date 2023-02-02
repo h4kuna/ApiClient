@@ -68,7 +68,7 @@ class EndpointResolverService
 
 			$this->lastResponse = $response;
 			$data = null;
-			if ($endpoint->getEntityClassName()) {
+			if ($endpoint->getEntityClassName() !== null) {
 				$d = $this->getData($response, $endpoint);
 				$data = $d->data;
 
@@ -97,9 +97,11 @@ class EndpointResolverService
 	{
 		$data = $this->apiClientService->getResponseData($response, $endpoint->isBinary());
 		$returnData = null;
-		if ($entityClassName = $endpoint->getEntityClassName()) {
+		$entityClassName = $endpoint->getEntityClassName();
+		if ($entityClassName !== null) {
 			if ($endpoint->isArray()) {
 				$returnData = [];
+				assert(is_iterable($data->data));
 				foreach ($data->data as $d) {
 					$returnData[] = EntityMapper::create($d, $entityClassName);
 				}
@@ -119,7 +121,7 @@ class EndpointResolverService
 	protected function getTokenForEndpoint(IEndpoint $endpoint): AccessTokenInterface
 	{
 		$token = $this->user->getAuthToken();
-		if ($this->user->isLoggedIn() && $token) {
+		if ($this->user->isLoggedIn() && $token !== null) {
 			return $token;
 		}
 

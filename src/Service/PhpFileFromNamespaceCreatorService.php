@@ -2,6 +2,7 @@
 
 namespace MirkoHuttner\ApiClient\Service;
 
+use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\Utils\FileSystem;
@@ -22,14 +23,17 @@ class PhpFileFromNamespaceCreatorService
 		$this->basePath = $basePath;
 	}
 
+
 	public function create(PhpNamespace $namespace, string $ignorePath = ''): void
 	{
 		$path = $this->createDir($namespace, $ignorePath);
 		foreach ($namespace->getClasses() as $class) {
 			$class->addComment('This class is auto-generated. Do not modify it manually!');
+			assert($class instanceof ClassType);
 			$this->createPhpFile($class, $path);
 		}
 	}
+
 
 	private function createDir(PhpNamespace $namespace, string $ignorePath = ''): string
 	{
@@ -42,21 +46,22 @@ class PhpFileFromNamespaceCreatorService
 	}
 
 
-	private function purgeDir(string ...$namepace): string
+	private function purgeDir(string ...$namespace): string
 	{
-		if (isset($namepace[0])) {
-			$rootDir = $this->basePath . $namepace[0];
+		if (isset($namespace[0])) {
+			$rootDir = $this->basePath . $namespace[0];
 			if (!isset($this->purgeDirs[$rootDir])) {
 				FileSystem::delete($rootDir);
 				$this->purgeDirs[$rootDir] = true;
 			}
 		}
 
-		$fullPath = $this->basePath . implode(DIRECTORY_SEPARATOR, $namepace);
+		$fullPath = $this->basePath . implode(DIRECTORY_SEPARATOR, $namespace);
 		FileSystem::createDir($fullPath, 0755);
 
 		return $fullPath;
 	}
+
 
 	private function createPhpFile(ClassType $class, string $path): void
 	{
@@ -66,13 +71,12 @@ class PhpFileFromNamespaceCreatorService
 		}
 
 		$file = fopen($fullPath, 'w');
-		if ($file) {
-			fwrite($file, '<?php declare(strict_types=1);' . "\n\n");
-			fwrite($file, (string) $class->getNamespace());
-			fclose($file);
-		} else {
+		if ($file === false) {
 			throw new \RuntimeException('Cannot open file: ' . $fullPath);
 		}
+		fwrite($file, '<?php declare(strict_types=1);' . "\n\n");
+		fwrite($file, (string) $class->getNamespace());
+		fclose($file);
 	}
 
 }
