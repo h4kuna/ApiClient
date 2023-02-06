@@ -3,12 +3,15 @@
 namespace MirkoHuttner\ApiClient\User;
 
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
+use MirkoHuttner\ApiClient\Exception\UnauthorizedException;
 use MirkoHuttner\ApiClient\Service\PasswordGrantService;
 use MirkoHuttner\ApiClient\Service\UserByTokenService;
 use MirkoHuttner\ApiClient\User\Exceptions;
 use Nette\Security;
+use Nette\Security\IdentityHandler;
+use Nette\Security\IIdentity;
 
-final class Authenticator implements Security\Authenticator
+final class Authenticator implements Security\Authenticator, IdentityHandler
 {
 	public const REGISTRATION_MAIL_NOT_CONFIRMED = 3598;
 	public const USER_BLOCKED = 3599;
@@ -42,4 +45,23 @@ final class Authenticator implements Security\Authenticator
 
 		return $userIdentity;
 	}
+
+	public function sleepIdentity(IIdentity $identity): IIdentity
+	{
+		assert($identity instanceof UserIdentity);
+
+		return $identity;
+	}
+
+	public function wakeupIdentity(IIdentity $identity): ?IIdentity
+	{
+		try {
+			assert($identity instanceof UserIdentity);
+
+			return $this->userByTokenService->getUserByToken($identity->getAuthToken());
+		} catch (UnauthorizedException $e) {
+			return null;
+		}
+	}
+
 }

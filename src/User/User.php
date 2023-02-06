@@ -32,6 +32,10 @@ abstract class User extends \Nette\Security\User
 	public function getAuthToken(): ?AccessTokenInterface
 	{
 		$identity = $this->getIdentity();
+		if ($identity === null) {
+			$this->logout(true);
+			return null;
+		}
 		$token = $identity->getAuthToken();
 		if ($token->hasExpired()) {
 			$token = $this->passwordGrantService->getRefreshToken($token);
