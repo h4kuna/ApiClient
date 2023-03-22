@@ -11,6 +11,8 @@ use MirkoHuttner\ApiClient\Exception\UserNotLoggedException;
 use MirkoHuttner\ApiClient\Mapper\EntityMapper;
 use MirkoHuttner\ApiClient\User\User;
 use MirkoHuttner\ApiClient\ValueObject\ResponseDataCount;
+use Nette\Utils\Json;
+use Nette\Utils\JsonException;
 use Psr\Http\Message\ResponseInterface;
 
 class EndpointResolverService
@@ -23,15 +25,18 @@ class EndpointResolverService
 
 	private ?ResponseInterface $lastResponse = null;
 
+
 	public function __construct(
 		ApiClientService $apiClientService,
 		ClientCredentialsGrantService $clientCredentialsGrantService,
-		User $user
-	) {
+		User $user,
+	)
+	{
 		$this->apiClientService = $apiClientService;
 		$this->clientCredentialsGrantService = $clientCredentialsGrantService;
 		$this->user = $user;
 	}
+
 
 	/**
 	 * @param IEndpoint $endpoint
@@ -67,7 +72,12 @@ class EndpointResolverService
 			}
 
 			$this->lastResponse = $response;
-			$data = null;
+			try {
+				$data = Json::decode($response->getBody()->getContents());
+			} catch (JsonException $e) {
+				$data = null;
+			}
+			$response->getBody()->rewind();
 			if ($endpoint->getEntityClassName() !== null) {
 				$d = $this->getData($response, $endpoint);
 				$data = $d->data;
@@ -75,6 +85,10 @@ class EndpointResolverService
 				if ($returnCount) {
 					return $d->count;
 				}
+			} elseif (isset($data->data)) {
+				$data = $data->data;
+			} else {
+				$data = null;
 			}
 
 			return $data;
@@ -83,6 +97,7 @@ class EndpointResolverService
 			throw $exception;
 		}
 	}
+
 
 	public function getLastResponse(): ResponseInterface
 	{
@@ -93,6 +108,7 @@ class EndpointResolverService
 		return $this->lastResponse;
 	}
 
+
 	protected function getData(ResponseInterface $response, IEndpoint $endpoint): ResponseDataCount
 	{
 		$data = $this->apiClientService->getResponseData($response, $endpoint->isBinary());
@@ -101,7 +117,7 @@ class EndpointResolverService
 		if ($entityClassName !== null) {
 			if ($endpoint->isArray()) {
 				$returnData = [];
-				assert(is_iterable($data->data));
+				assert(is_iterable($data->data) || $data->data instanceof \stdClass);
 				foreach ($data->data as $d) {
 					$returnData[] = EntityMapper::create($d, $entityClassName);
 				}
@@ -112,6 +128,7 @@ class EndpointResolverService
 
 		return new ResponseDataCount($returnData, $data->count);
 	}
+
 
 	/**
 	 * @param IEndpoint $endpoint
@@ -131,4 +148,5 @@ class EndpointResolverService
 			return $this->clientCredentialsGrantService->getAccessToken();
 		}
 	}
+
 }
